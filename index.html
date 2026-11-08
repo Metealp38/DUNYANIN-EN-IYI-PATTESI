@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dombik Patte'nin Macerası 🐢</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body {
+            background: linear-gradient(135deg, #a8e6cf, #dcedc1);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            color: #2d5a27;
+        }
+        #header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        h1 { font-size: 24px; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); }
+        #stats {
+            display: flex;
+            gap: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 8px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+        #game-area {
+            position: relative;
+            width: 340px;
+            height: 460px;
+            background: #e0f7fa;
+            border: 5px solid #4caf50;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        #ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 45px;
+            background: #8bc34a;
+            border-top: 4px solid #689f38;
+        }
+        #player {
+            position: absolute;
+            bottom: 35px;
+            left: 145px;
+            font-size: 48px;
+            transition: left 0.08s ease-out;
+            z-index: 10;
+        }
+        .item {
+            position: absolute;
+            font-size: 32px;
+            z-index: 5;
+        }
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            z-index: 20;
+        }
+        button {
+            margin-top: 15px;
+            padding: 12px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4);
+        }
+        button:active { transform: scale(0.95); }
+        #controls {
+            display: flex;
+            gap: 30px;
+            margin-top: 12px;
+        }
+        .ctrl-btn {
+            width: 70px;
+            height: 50px;
+            font-size: 24px;
+            background: #ffffff;
+            color: #2d5a27;
+            border: 3px solid #4caf50;
+            border-radius: 15px;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <h1>🐢 Dombik Patte'nin Macerası</h1>
+    </div>
+
+    <div id="stats">
+        <div>Puan: <span id="score">0</span></div>
+        <div>Can: <span id="lives">❤️❤️❤️</span></div>
+    </div>
+
+    <div id="game-area">
+        <div id="ground"></div>
+        <div id="player">🐢</div>
+
+        <div id="overlay">
+            <div style="font-size: 50px;">🐢💚</div>
+            <h2 id="msg-title" style="margin: 10px 0;">Hazır mısın Patte?</h2>
+            <p id="msg-text" style="font-size: 15px; line-height: 1.4;">
+                Sağlıklı yiyecekleri (🥬🥕🍓🍎) topla!<br>
+                Abur cuburlardan (🍔🍕🥤) kaç!<br>
+                <b>100 puana</b> ulaşırsan sürpriz mesaj var!
+            </p>
+            <button onclick="startGame()">Oyuna Başla ▶</button>
+        </div>
+    </div>
+
+    <div id="controls">
+        <button class="ctrl-btn" ontouchstart="moveLeft()" onclick="moveLeft()">⬅️</button>
+        <button class="ctrl-btn" ontouchstart="moveRight()" onclick="moveRight()">➡️</button>
+    </div>
+
+    <script>
+        const gameArea = document.getElementById('game-area');
+        const player = document.getElementById('player');
+        const scoreEl = document.getElementById('score');
+        const livesEl = document.getElementById('lives');
+        const overlay = document.getElementById('overlay');
+        const msgTitle = document.getElementById('msg-title');
+        const msgText = document.getElementById('msg-text');
+
+        let playerX = 145;
+        let score = 0;
+        let lives = 3;
+        let gameActive = false;
+        let spawnTimer;
+
+        const healthyFoods = ['🥬', '🥕', '🍓', '🍎', '🥦', '🥒'];
+        const junkFoods = ['🍔', '🍕', '🥤', '🍩', '🍟'];
+
+        function moveLeft() {
+            if (!gameActive) return;
+            playerX = Math.max(5, playerX - 35);
+            player.style.left = playerX + 'px';
+            player.style.transform = 'scaleX(1)';
+        }
+
+        function moveRight() {
+            if (!gameActive) return;
+            playerX = Math.min(285, playerX + 35);
+            player.style.left = playerX + 'px';
+            player.style.transform = 'scaleX(-1)';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') moveLeft();
+            if (e.key === 'ArrowRight') moveRight();
+        });
+
+        function startGame() {
+            score = 0;
+            lives = 3;
+            playerX = 145;
+            player.style.left = playerX + 'px';
+            scoreEl.innerText = score;
+            livesEl.innerText = '❤️❤️❤️';
+            overlay.style.display = 'none';
+            gameActive = true;
+
+            document.querySelectorAll('.item').forEach(el => el.remove());
+            spawnTimer = setInterval(createItem, 850);
+        }
+
+        function createItem() {
+            if (!gameActive) return;
+
+            const item = document.createElement('div');
+            item.classList.add('item');
+            const isHealthy = Math.random() > 0.35;
+            const list = isHealthy ? healthyFoods : junkFoods;
+            item.innerText = list[Math.floor(Math.random() * list.length)];
+            item.dataset.healthy = isHealthy;
+
+            let itemX = Math.floor(Math.random() * 295) + 5;
+            let itemY = -30;
+            item.style.left = itemX + 'px';
+            item.style.top = itemY + 'px';
+            gameArea.appendChild(item);
+
+            const fallInterval = setInterval(() => {
+                if (!gameActive) {
+                    clearInterval(fallInterval);
+                    item.remove();
+                    return;
+                }
+
+                itemY += 4 + (score / 40);
+                item.style.top = itemY + 'px';
+
+                // Çarpışma kontrolü
+                if (itemY > 375 && itemY < 425 && Math.abs(itemX - playerX) < 38) {
+                    clearInterval(fallInterval);
+                    item.remove();
+
+                    if (item.dataset.healthy === 'true') {
+                        score += 10;
+                        scoreEl.innerText = score;
+                        if (score >= 100) {
+                            endGame(true);
+                        }
+                    } else {
+                        lives--;
+                        livesEl.innerText = '❤️'.repeat(Math.max(0, lives));
+                        if (lives <= 0) {
+                            endGame(false);
+                        }
+                    }
+                } else if (itemY > 460) {
+                    clearInterval(fallInterval);
+                    item.remove();
+                }
+            }, 20);
+        }
+
+        function endGame(won) {
+            gameActive = false;
+            clearInterval(spawnTimer);
+            overlay.style.display = 'flex';
+
+            if (won) {
+                msgTitle.innerText = "🎉 Tebrikler Dombik Patte! 🎉";
+                msgText.innerHTML = "<b>100 Puana Ulaştın!</b><br><br>Seni dünyalar kadar çok seviyorum canım kardeşim! Sen benim en tatlı, en güçlü kahramanımsın. İyi ki varsın! 💚🐢";
+            } else {
+                msgTitle.innerText = "Oyun Bitti Patte! 🐢";
+                msgText.innerHTML = "Skorun: <b>" + score + "</b><br>Abur cuburlara dikkat et, tekrar deneyip 100 puana ulaşabilirsin!";
+            }
+        }
+    </script>
+</body>
+</html>
